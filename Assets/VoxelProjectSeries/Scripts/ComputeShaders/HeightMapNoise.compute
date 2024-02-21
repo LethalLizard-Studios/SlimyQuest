@@ -1,0 +1,224 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel FillArray
+#pragma kernel ClearArray
+
+#include "Noise/SimplexNoise.compute"
+
+struct Voxel {
+    int ID;
+};
+
+RWStructuredBuffer<Voxel> voxelArray;
+RWStructuredBuffer<uint> count;
+
+float3 chunkPosition;
+float3 seedOffset;
+
+int containerSizeX;
+int containerSizeY;
+
+bool hasCaves;
+uint maxHeight;
+
+float noiseScale;
+float caveScale;
+float caveThreshold;
+
+int surfaceID;
+int subsurfaceID;
+
+int surfaceAltID;
+int sandstoneVoxelID;
+
+int stoneVoxelID;
+int stoneDeadGrassVoxelID;
+int deepStoneVoxelID;
+int unbreakableVoxelID;
+int marbleVoxelID;
+int bedrockVoxelID;
+int magmaBedrockVoxelID;
+
+int coalVoxelID;
+int copperVoxelID;
+int ironVoxelID;
+int amethystVoxelID;
+int slimeVoxelID;
+int opalVoxelID;
+int aluminumVoxelID;
+
+int flattenCoord(uint3 idx)
+{
+    return idx.x + (idx.y * (containerSizeX + 3)) + (idx.z * (containerSizeX + 3) * (containerSizeY + 1));
+}
+
+[numthreads(8, 8, 8)]
+void FillArray(uint3 id : SV_DispatchThreadID)
+{
+    if (any(id.xz > containerSizeX + 2))
+        return;
+    
+    float3 pos = id + chunkPosition + seedOffset;
+    float2 posXZ = pos.xz;
+
+    float height = 0;
+    
+    bool biome = snoise((pos.xz + 128) * 0.005) > 0.5f;
+    
+    if (!biome)
+    {
+        height = (snoise(posXZ * noiseScale) * 32) + (snoise(posXZ * 0.04f) * 16);
+    }
+    else
+    {
+        height = (snoise(posXZ * noiseScale * 0.2f) * 16) + (snoise(posXZ * 0.03f) * 6) - 10;
+    }
+    
+    uint roundHeight = round(height) + 100;
+    Voxel vox;
+    vox.ID = 0;
+
+    if (id.y > roundHeight)
+    {
+        vox.ID = 0;
+        voxelArray[flattenCoord(id)] = vox;
+        return;
+    }
+
+    bool isSurfaceBlock = id.y >= roundHeight;
+
+    //Surface Biomes
+    if (biome)
+    {
+        vox.ID = surfaceAltID;
+    }
+    else
+    {
+        vox.ID = isSurfaceBlock ? surfaceID : subsurfaceID;
+    }
+
+    bool isBedrockBlock = id.y <= roundHeight - (80 + (snoise(posXZ * 0.2f) * 5));
+    bool isDeepStoneBlock = id.y <= roundHeight - (38 + (snoise(posXZ * 0.16f) * 4));
+    bool isStoneBlock = id.y <= roundHeight - 6;
+
+    float3 posAbove = float3(pos.x, pos.y + 1, pos.z);
+
+    if (!isSurfaceBlock)
+    {
+        if (isBedrockBlock) {
+            //Hell
+            if (id.z == 1)
+            {
+                vox.ID = 0;
+
+                if (snoise((pos + 16) * 0.05f) > 0.5f)
+                {
+                    if (snoise((posAbove + 16) * 0.05f) > 0.5f)
+                    {
+                        vox.ID = bedrockVoxelID;
+
+                        if (snoise((pos + 16) * 0.07f) > 0.8f)
+                            vox.ID = amethystVoxelID;
+                    }
+                    else
+                        vox.ID = magmaBedrockVoxelID;
+                }
+            }
+            else
+                vox.ID = bedrockVoxelID;
+        }
+        else if (isDeepStoneBlock) {
+            vox.ID = deepStoneVoxelID;
+        }
+        else if (isStoneBlock) {
+            if (biome && id.y >= roundHeight - 12)
+            {
+                vox.ID = sandstoneVoxelID;
+            }
+            else
+            {
+                vox.ID = stoneVoxelID;
+                
+                if (id.z == 1 && hasCaves && snoise(posAbove * caveScale) > caveThreshold)
+                    vox.ID = stoneDeadGrassVoxelID;
+            }
+        }
+        if (id.z == 1)
+        {
+            if (isStoneBlock && !isBedrockBlock)
+            {
+                if (snoise(pos * 0.15f) > 0.65f)
+                {
+                    if (!isDeepStoneBlock)
+                    {
+                        if (id.x % 2 == 0)
+                            vox.ID = coalVoxelID;
+                        else
+                            vox.ID = coalVoxelID;
+                    }
+                    else
+                        vox.ID = coalVoxelID;
+                }
+                else if (snoise((pos + 128) * 0.1f) > 0.81f)
+                {
+                    if (!isDeepStoneBlock)
+                        vox.ID = aluminumVoxelID;
+                }
+                else if (snoise((pos + 48) * 0.06f) > 0.84f)
+                {
+                    if (!isDeepStoneBlock)
+                    {
+                        if (id.x % 2 == 0)
+                            vox.ID = copperVoxelID;
+                        else
+                            vox.ID = copperVoxelID;
+                    }
+                    else
+                        vox.ID = copperVoxelID;
+                }
+                else if (isDeepStoneBlock && snoise((pos + 64) * 0.07f) > 0.81f)
+                {
+                    if (id.x % 2 == 0)
+                        vox.ID = ironVoxelID;
+                    else
+                        vox.ID = ironVoxelID;
+                }
+                else if (isDeepStoneBlock && snoise((pos + 32) * 0.08f) > 0.89f)
+                {
+                    vox.ID = slimeVoxelID;
+                }
+                else if (isDeepStoneBlock && snoise((pos + 128) * 0.08f) > 0.93f)
+                {
+                    vox.ID = opalVoxelID;
+                }
+            }
+        }
+
+        if ((isStoneBlock || isDeepStoneBlock) && !isBedrockBlock)
+        {
+            float noise = snoise((pos + 32) * 0.02f);
+            if (noise > 0.5f)
+                vox.ID = marbleVoxelID;
+        }
+    }
+
+    //Set caves to air
+    if (id.z <= 2 && hasCaves && snoise(pos * caveScale) > caveThreshold && !isBedrockBlock)
+        vox.ID = 0;
+
+    //Unbreakable layer
+    if (id.y == 0)
+        vox.ID = unbreakableVoxelID;
+
+    if (vox.ID != 0)
+        count.IncrementCounter();
+
+    voxelArray[flattenCoord(id)] = vox;
+}
+
+[numthreads(8, 8, 8)]
+void ClearArray(uint3 id : SV_DispatchThreadID)
+{
+    Voxel emptyVoxel;
+    emptyVoxel.ID = 0;
+    voxelArray[flattenCoord(id)] = emptyVoxel;
+}
