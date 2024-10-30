@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
-[RequireComponent(typeof(MeshCollider))]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class Chunk : MonoBehaviour
 {
     public Vector3 position;
@@ -249,11 +247,26 @@ public class Chunk : MonoBehaviour
                     {
                         connectionID = data[surroundingChecks[2] + blockPos].ID - 1;
 
-                        if (connectionID == -1)
-                            connectionID = data[surroundingChecks[3] + blockPos].ID - 1;
-                        if (connectionID == -1)
-                            connectionID = Blocks.Stone.ID - 1;
+                        if (connectionID == Blocks.Stone.ID - 1 || connectionID == Blocks.Slate.ID - 1
+                            || connectionID == Blocks.Hellrock.ID - 1)
+                        {
 
+                        }
+                        else
+                        {
+                            connectionID = data[new Vector3(0, -2, 2) + blockPos].ID - 1;
+
+                            if (connectionID == Blocks.Stone.ID - 1 || connectionID == Blocks.Slate.ID - 1
+                            || connectionID == Blocks.Hellrock.ID - 1)
+                            {
+
+                            }
+                            else
+                            {
+                                connectionID = Blocks.Stone.ID - 1;
+                            }
+                        }
+                            
                         hasConnection = 1;
 
                         if (ID == Blocks.CopperOre.ID)
