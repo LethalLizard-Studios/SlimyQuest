@@ -11,6 +11,8 @@ struct Voxel {
 RWStructuredBuffer<Voxel> voxelArray;
 RWStructuredBuffer<uint> count;
 
+bool pixelArray;
+
 float3 chunkPosition;
 float3 seedOffset;
 
@@ -76,6 +78,29 @@ void FillArray(uint3 id : SV_DispatchThreadID)
     uint roundHeight = round(height) + 100;
     Voxel vox;
     vox.ID = 0;
+
+    //Check if in circle
+    float2 circleCenter = (150.0f, 108.0f);
+    float distanceSquared = (((id.x + chunkPosition.x) - circleCenter.x) * ((id.x + chunkPosition.x) - circleCenter.x)) + ((id.y - circleCenter.y) * (id.y - circleCenter.y));
+    
+    float circleRadius = 156.0f;
+    
+    if (distanceSquared > circleRadius * circleRadius)
+    {
+        vox.ID = 0;
+        voxelArray[flattenCoord(id)] = vox;
+        return;
+    }
+    
+    float outerRadius = circleRadius - 8.0f;
+    
+    //Break up outer bounds
+    if (distanceSquared > outerRadius * outerRadius && snoise((pos + 32) * 0.07f) > 0.1f)
+    {
+        vox.ID = 0;
+        voxelArray[flattenCoord(id)] = vox;
+        return;
+    }
 
     if (id.y > roundHeight)
     {

@@ -31,6 +31,8 @@ public class CharcterMovement : MonoBehaviour
 
     private float touchedGround = 3;
 
+    private float side = 0;
+
     private bool jumped = false;
     private bool canDouble = false;
     private int jumpsLeft = 1;
@@ -56,6 +58,39 @@ public class CharcterMovement : MonoBehaviour
             jumpSFX.Play();
         }
 
+        side = Input.GetAxis("Horizontal");
+
+        int direction;
+
+        if (side > 0) { direction = 1; }
+        else if (side < 0) { direction = -1; } else { direction = 0; }
+
+        rotation = Quaternion.Euler(Mathf.Clamp(moveDirection.y + 7.2f, -32, 32), -direction * 28f, 0);
+
+        moveDirection = new Vector2(side, 0);
+        moveDirection = transform.TransformDirection(moveDirection);
+        moveDirection *= speed + (touchedGround / 3f) * 2.5f;
+
+        if (jumped)
+        {
+            jumpProgress += Time.deltaTime * 3;
+
+            if (jumpsLeft != 1)
+            {
+                canDouble = false;
+                touchedGround = 3;
+            }
+
+            moveDirection.y += jumpCurve.Evaluate(jumpProgress) * 8;
+
+            if (jumpProgress > 2.5f || (cc.isGrounded && jumpProgress > 0.4f))
+                jumped = false;
+        }
+
+        Vector3 scale = new Vector3(1, Mathf.Clamp(1 + (Mathf.Abs(moveDirection.y)) / 16f, 1f, 1.2f), 1);
+
+        playerModel.localScale = Vector3.Lerp(playerModel.localScale, scale, Time.deltaTime * 18f);
+
         playerModel.position = Vector3.Lerp(playerModel.position, transform.position, Time.deltaTime * 32f);
         playerModel.localRotation = Quaternion.Lerp(playerModel.localRotation, rotation, Time.deltaTime * 12f);
     }
@@ -73,22 +108,6 @@ public class CharcterMovement : MonoBehaviour
             splashParticles.Play();
             hasLanded = true;
         }
-
-        float side = Input.GetAxis("Horizontal");
-
-        int direction;
-
-        if (side > 0) { direction = 1; }
-        else if (side < 0) { direction = -1; } else { direction = 0; }
-
-        rotation = Quaternion.Euler(Mathf.Clamp(moveDirection.y + 7.2f, -32, 32), -direction * 28f, 0);
-        Vector3 scale = new Vector3(1, Mathf.Clamp(1 + (Mathf.Abs(moveDirection.y) + -7.2f) / 16f, 0.75f, 1.2f), 1);
-
-        playerModel.localScale = Vector3.Lerp(playerModel.localScale, scale, Time.deltaTime * 18f);
-
-        moveDirection = new Vector2(side, 0);
-        moveDirection = transform.TransformDirection(moveDirection);
-        moveDirection *= speed + (touchedGround / 3f) * 2.5f;
 
         skyboxRotation += Time.deltaTime * 1.25f;
         WeatherManager.Instance.currentSkybox.SetFloat("_Rotation", skyboxRotation + (transform.position.x * 0.4f));
@@ -109,22 +128,6 @@ public class CharcterMovement : MonoBehaviour
             jumped = true;
             jumpProgress = 0;
             jumpsLeft--;
-        }
-
-        if (jumped)
-        {
-            jumpProgress += Time.deltaTime * 3;
-
-            if (jumpsLeft != 1)
-            {
-                canDouble = false;
-                touchedGround = 3;
-            }
-
-            moveDirection.y += jumpCurve.Evaluate(jumpProgress) * 8;
-
-            if (jumpProgress > 2.5f || (cc.isGrounded && jumpProgress > 0.4f))
-                jumped = false;
         }
 
         moveDirection.y -= gForce * (Time.deltaTime * touchedGround);

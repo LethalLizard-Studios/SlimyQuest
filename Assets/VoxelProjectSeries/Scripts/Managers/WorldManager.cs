@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -19,7 +18,7 @@ public class WorldManager : MonoBehaviour
 
     private int currentChunkX = 0;
 
-    private const int RenderDist = 1;
+    private const int RENDER_DISTANCE = 2;
 
     private ChunkFog fog;
 
@@ -53,9 +52,6 @@ public class WorldManager : MonoBehaviour
 
             if (newChunkX != currentChunkX)
             {
-                if (newChunkX < worldSettings.containerSize || newChunkX > (worldSettings.chunksRendered * worldSettings.containerSize))
-                    return;
-
                 currentChunkX = newChunkX;
 
                 LoadChunksAroundPlayer(newChunkX);
@@ -111,10 +107,10 @@ public class WorldManager : MonoBehaviour
 
     private async void LoadChunksAroundPlayer(int chunkOffsetX)
     {
-        var tasks = new Task[(RenderDist * 2) + 1];
-        for (int i = -RenderDist; i <= RenderDist; i++)
+        var tasks = new Task[(RENDER_DISTANCE * 2) + 1];
+        for (int i = -RENDER_DISTANCE; i <= RENDER_DISTANCE; i++)
         {
-            tasks[i + RenderDist] = LoadChunk(i, chunkOffsetX);
+            tasks[i + RENDER_DISTANCE] = LoadChunk(i, chunkOffsetX);
         }
 
         await Task.WhenAll(tasks);
@@ -125,7 +121,10 @@ public class WorldManager : MonoBehaviour
 
     private async Task LoadChunk(int index, int chunkOffsetX)
     {
-        Vector3 pos = new Vector3(chunkOffsetX + (index * 32), 0, 0);
+        Vector3 pos = new Vector3(chunkOffsetX + (index * worldSettings.containerSize), 0, 0);
+
+        if (index < -worldSettings.chunksRendered || index > worldSettings.chunksRendered)
+            return;
 
         if (!chunks.ContainsKey(pos))
         {

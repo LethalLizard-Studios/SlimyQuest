@@ -14,7 +14,6 @@ public class ComputeManager : MonoBehaviour
 
     public Vector3 seedOffset = Vector3.zero;
 
-
     public void Awake()
     {
         seedOffset = new Vector3(Random.Range(0, 1000), 0, Random.Range(0, 1000));

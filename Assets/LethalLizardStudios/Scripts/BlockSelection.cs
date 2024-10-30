@@ -159,10 +159,7 @@ public class BlockSelection : MonoBehaviour
 
         foreach (Vector3 placePos in positions)
         {
-            float chunkID = Mathf.Abs(placePos.x + WorldManager.Instance.transform.position.x - 0.5f);
-            float remainder = (chunkID % 32);
-
-            Vector3 chunkPos = new Vector3(Mathf.Abs(chunkID - remainder), 0, 0);
+            Vector3 chunkPos = GetChunkPos(placePos);
             Vector3 pos = new Vector3(placePos.x - 0.5f - chunkPos.x, placePos.y - 0.5f, layerSelected);
 
             //Error correction
@@ -199,7 +196,7 @@ public class BlockSelection : MonoBehaviour
                     }
                 }
 
-                if (hotbar.ItemAmount() <= 0)
+                if (hotbar.ItemAmount() <= 0 || hotbar.ItemCannotBePlaced())
                     continue;
 
                 hotbar.RemoveItem();
@@ -243,12 +240,19 @@ public class BlockSelection : MonoBehaviour
         }
     }
 
-    public IEnumerator BreakBlock(Vector3 breakPos, bool showParticles)
+    private Vector3 GetChunkPos(Vector3 breakPos)
     {
-        float chunkID = Mathf.Abs(breakPos.x + WorldManager.Instance.transform.position.x - 0.5f);
+        float chunkID = breakPos.x + WorldManager.Instance.transform.position.x - 0.5f;
         float remainder = (chunkID % 32);
 
-        Vector3 chunkPos = new Vector3(Mathf.Abs(chunkID - remainder), 0, 0);
+        //Debug.Log("ChunkID=" + chunkID + ", remainder=" + remainder + ", chunkPos=" + Mathf.RoundToInt(chunkPos.x) + ", pos=" + pos.ToString());
+
+        return chunkID < 0 ? new Vector3(chunkID - remainder - 32, 0, 0) : new Vector3(chunkID - remainder, 0, 0);
+    }
+
+    public IEnumerator BreakBlock(Vector3 breakPos, bool showParticles)
+    {
+        Vector3 chunkPos = GetChunkPos(breakPos);
         Vector3 pos = new Vector3(breakPos.x - 0.5f - chunkPos.x, breakPos.y - 0.5f, layerSelected);
 
         //Error correction
@@ -297,10 +301,7 @@ public class BlockSelection : MonoBehaviour
 
     public void PlaceBlock(int blockID, Vector3 placePos, bool showParticles)
     {
-        float chunkID = Mathf.Abs(placePos.x + WorldManager.Instance.transform.position.x - 0.5f);
-        float remainder = (chunkID % 32);
-
-        Vector3 chunkPos = new Vector3(Mathf.Abs(chunkID - remainder), 0, 0);
+        Vector3 chunkPos = GetChunkPos(placePos);
         Vector3 pos = new Vector3(placePos.x - 0.5f - chunkPos.x, placePos.y - 0.5f, layerSelected);
 
         //Error correction
@@ -321,7 +322,7 @@ public class BlockSelection : MonoBehaviour
         //Check if block already there before placement
         if (blockID != 0)
         {
-            if (hotbar.ItemAmount() <= 0)
+            if (hotbar.ItemAmount() <= 0 || hotbar.ItemCannotBePlaced())
                 return;
 
             hotbar.RemoveItem();

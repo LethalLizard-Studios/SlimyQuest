@@ -30,6 +30,8 @@ public abstract class BlockBehaviours
         public bool m_hasVoxelIcon = true;
         public Texture2D m_icon;
 
+        public bool m_canBePlaced = true;
+
         public bool m_hasConnections = true;
 
         public bool m_hasTop = false;
@@ -110,6 +112,12 @@ public abstract class BlockBehaviours
         public BlockBehaviours.Properties DisableTilingConnect()
         {
             m_hasConnections = false;
+            return this;
+        }
+
+        public BlockBehaviours.Properties CannotBePlaced()
+        {
+            m_canBePlaced = false;
             return this;
         }
     }

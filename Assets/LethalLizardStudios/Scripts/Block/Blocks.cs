@@ -17,7 +17,7 @@ public static class Blocks
 
     public static readonly Block MixedSeeds = Registry.AddBlock(
         new Block("Mixed Seeds", BlockBehaviours.Properties.of("items/mixed_seeds.png")
-        .Toughness(EXTRA_SOFT).SetIcon("items/mixed_seeds.png").ContainsEnergy(3).DisableTilingConnect()));
+        .Toughness(EXTRA_SOFT).SetIcon("items/mixed_seeds.png").ContainsEnergy(3).DisableTilingConnect().CannotBePlaced()));
 
     public static readonly Block Grass = Registry.AddBlock(
         new Block("Grass", BlockBehaviours.Properties.of("blocks/grass.png", "blocks/grass_top.png")
