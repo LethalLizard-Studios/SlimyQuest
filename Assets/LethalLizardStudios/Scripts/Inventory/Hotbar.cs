@@ -140,7 +140,7 @@ public class Hotbar : MonoBehaviour
 
     public bool ItemCannotBePlaced()
     {
-        return Registry.AtIndex(itemInSlots[CurrentSlotAdjusted()]).m_properties.m_canBePlaced;
+        return !Registry.AtIndex(itemInSlots[CurrentSlotAdjusted()]).m_properties.m_canBePlaced;
     }
 
     public int FindEmptySlot()

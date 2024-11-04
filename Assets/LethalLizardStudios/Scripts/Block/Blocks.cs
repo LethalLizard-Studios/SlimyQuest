@@ -4,8 +4,8 @@
 
 public static class Blocks
 {
-    private const float EXTRA_SOFT = 0.25f;
-    private const float SOFT = 0.35f;
+    private const float EXTRA_SOFT = 0.15f;
+    private const float SOFT = 0.3f;
     private const float HARD = 0.55f;
     private const float EXTRA_HARD = 0.8f;
 
@@ -17,11 +17,11 @@ public static class Blocks
 
     public static readonly Block MixedSeeds = Registry.AddBlock(
         new Block("Mixed Seeds", BlockBehaviours.Properties.of("items/mixed_seeds.png")
-        .Toughness(EXTRA_SOFT).SetIcon("items/mixed_seeds.png").ContainsEnergy(3).DisableTilingConnect().CannotBePlaced()));
+        .Toughness(EXTRA_SOFT).SetIcon("items/mixed_seeds.png").ContainsEnergy(3).DisableTilingConnect()));
 
     public static readonly Block Grass = Registry.AddBlock(
         new Block("Grass", BlockBehaviours.Properties.of("blocks/grass.png", "blocks/grass_top.png")
-        .Toughness(EXTRA_SOFT).DropsOther(MixedSeeds).ContainsEnergy(1).DisableTilingConnect()));
+        .Toughness(EXTRA_SOFT).DropsOther(MixedSeeds).ContainsEnergy(1).DisableTilingConnect().CannotBePlaced()));
 
     public static readonly Block Stone = Registry.AddBlock(
         new Block("Stone", BlockBehaviours.Properties.of("blocks/stone.png")
